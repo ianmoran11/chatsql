@@ -102,5 +102,5 @@ A task is ONLY complete when:
 - [x] **Task 14:** Implement the local audit log. On successful execution, save the timestamp, user ID, natural language prompt, and SQL into an array, and add an "Export Audit Log" CSV button to the sidebar.
 - [x] **Task 15:** (Note the the signup/authentication has been removed as this was impeding testing. Can you replace it with the requirement of entering a password "p@ssw0rd" that is shared by all users)
 - [x] **Task 16:** Can you start sessions with the northwind_small.sqlite (in main folder) database loaded?
-- [ ] **Task 17:**  Can you ensure that the tables, their columns and any associated metadata of the active sqlite database is presented in the left sidebar. You can make this expandable, with only table names presented initially. 
+- [x] **Task 17:**  Can you ensure that the tables, their columns and any associated metadata of the active sqlite database is presented in the left sidebar. You can make this expandable, with only table names presented initially.
 - [ ] **Task 18:** Can you append previous questions and results to new prompts so that answers to previous questions can be referred to in new questions. Also offer the option to start a new chat to clear the context. 

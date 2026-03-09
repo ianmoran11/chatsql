@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { QueryExecResult } from 'sql.js';
 import FileUpload from '../components/FileUpload';
 import SettingsModal from '../components/SettingsModal';
+import SchemaExplorer from '../components/SchemaExplorer';
 import { useDatabase } from '../contexts/DatabaseContext';
 import { streamLLMResponse } from '../lib/llmService';
 
@@ -280,22 +281,20 @@ export default function ChatPage() {
           </button>
         </div>
 
-        <div className="flex-1 p-4 space-y-4">
-          {isLoading && <p className="text-sm text-gray-400">Loading database...</p>}
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          {!isLoading && !error && (
-            <p className="text-sm text-green-400">Database ready</p>
-          )}
-          <div>
-            <p className="text-xs text-gray-400 mb-2">{auditLog.length} audit entr{auditLog.length === 1 ? 'y' : 'ies'}</p>
-            <button
-              onClick={() => exportAuditLogCSV(auditLog)}
-              disabled={auditLog.length === 0}
-              className="w-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors"
-            >
-              Export Audit Log CSV
-            </button>
-          </div>
+        {isLoading && <p className="px-4 py-2 text-sm text-gray-400">Loading database...</p>}
+        {error && <p className="px-4 py-2 text-sm text-red-400">{error}</p>}
+
+        <SchemaExplorer />
+
+        <div className="p-3 space-y-2 border-t border-gray-700">
+          <p className="text-xs text-gray-500">{auditLog.length} audit entr{auditLog.length === 1 ? 'y' : 'ies'}</p>
+          <button
+            onClick={() => exportAuditLogCSV(auditLog)}
+            disabled={auditLog.length === 0}
+            className="w-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+          >
+            Export Audit Log CSV
+          </button>
         </div>
 
         <FileUpload />

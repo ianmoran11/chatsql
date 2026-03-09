@@ -3,6 +3,19 @@ import type { ReactNode } from 'react';
 import type { Database, SqlJsStatic } from 'sql.js';
 import initSqlJs from 'sql.js';
 
+export interface ColumnMeta {
+  name: string;
+  type: string;
+  notnull: boolean;
+  pk: boolean;
+  dflt_value: string | null;
+}
+
+export interface TableMeta {
+  name: string;
+  columns: ColumnMeta[];
+}
+
 interface DatabaseContextType {
   db: Database | null;
   setDb: (db: Database | null) => void;
@@ -10,6 +23,7 @@ interface DatabaseContextType {
   isLoading: boolean;
   error: string | null;
   schema: string;
+  tablesMeta: TableMeta[];
 }
 
 const DatabaseContext = createContext<DatabaseContextType | null>(null);
@@ -24,10 +38,12 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [schema, setSchema] = useState<string>('');
+  const [tablesMeta, setTablesMeta] = useState<TableMeta[]>([]);
 
   useEffect(() => {
     if (!db) {
       setSchema('');
+      setTablesMeta([]);
       return;
     }
     try {
@@ -40,6 +56,35 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
       }
     } catch {
       setSchema('');
+    }
+
+    try {
+      const tableResults = db.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
+      if (tableResults.length === 0) {
+        setTablesMeta([]);
+        return;
+      }
+      const tableNames = (tableResults[0].values as string[][]).map(row => row[0]);
+      const meta: TableMeta[] = tableNames.map(tableName => {
+        try {
+          const colResults = db.exec(`PRAGMA table_info("${tableName}")`);
+          const columns: ColumnMeta[] = colResults.length > 0
+            ? (colResults[0].values as (string | number | null)[][]).map(row => ({
+                name: String(row[1]),
+                type: String(row[2] ?? ''),
+                notnull: Number(row[3]) === 1,
+                dflt_value: row[4] != null ? String(row[4]) : null,
+                pk: Number(row[5]) > 0,
+              }))
+            : [];
+          return { name: tableName, columns };
+        } catch {
+          return { name: tableName, columns: [] };
+        }
+      });
+      setTablesMeta(meta);
+    } catch {
+      setTablesMeta([]);
     }
   }, [db]);
 
@@ -71,7 +116,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DatabaseContext.Provider value={{ db, setDb, sqlJs, isLoading, error, schema }}>
+    <DatabaseContext.Provider value={{ db, setDb, sqlJs, isLoading, error, schema, tablesMeta }}>
       {children}
     </DatabaseContext.Provider>
   );
