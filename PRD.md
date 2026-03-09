@@ -92,7 +92,7 @@ A task is ONLY complete when:
 
 
 
-- [ ] **Task 11:** Implement a custom UI parser in the Chat component that reads the streaming response. As text arrives, stream the contents of the `<analytical_plan>` into a "Plan" text block. Once the parser detects the `<sql_query>` tag, stream the subsequent text into a distinct, styled code block below the plan.
+- [x] **Task 11:** Implement a custom UI parser in the Chat component that reads the streaming response. As text arrives, stream the contents of the `<analytical_plan>` into a "Plan" text block. Once the parser detects the `<sql_query>` tag, stream the subsequent text into a distinct, styled code block below the plan.
 
 
 

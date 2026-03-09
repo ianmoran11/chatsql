@@ -2,20 +2,87 @@ import { useState, useRef, useEffect } from 'react';
 import FileUpload from '../components/FileUpload';
 import SettingsModal from '../components/SettingsModal';
 import { useDatabase } from '../contexts/DatabaseContext';
+import { streamLLMResponse } from '../lib/llmService';
 
 export type MessageRole = 'user' | 'assistant';
+
+export interface AssistantContent {
+  planText: string;
+  sqlText: string;
+  raw: string;
+}
 
 export interface ChatMessage {
   id: string;
   role: MessageRole;
-  content: string;
+  content: string; // user messages
+  structured?: AssistantContent; // assistant messages
   timestamp: Date;
 }
 
+function parseStreamedContent(raw: string): AssistantContent {
+  const planMatch = raw.match(/<analytical_plan>([\s\S]*?)(?:<\/analytical_plan>|$)/);
+  const sqlMatch = raw.match(/<sql_query>([\s\S]*?)(?:<\/sql_query>|$)/);
+
+  // If we've passed the opening tag, capture everything after it
+  let planText = '';
+  let sqlText = '';
+
+  if (planMatch) {
+    planText = planMatch[1];
+  } else if (raw.includes('<analytical_plan>')) {
+    planText = raw.slice(raw.indexOf('<analytical_plan>') + '<analytical_plan>'.length);
+  }
+
+  if (sqlMatch) {
+    sqlText = sqlMatch[1];
+  } else if (raw.includes('<sql_query>')) {
+    sqlText = raw.slice(raw.indexOf('<sql_query>') + '<sql_query>'.length);
+  }
+
+  return { planText: planText.trim(), sqlText: sqlText.trim(), raw };
+}
+
+function AssistantMessage({ msg }: { msg: ChatMessage }) {
+  const content = msg.structured ?? parseStreamedContent(msg.content);
+  const hasStructure = content.planText || content.sqlText;
+
+  if (!hasStructure) {
+    // Still accumulating before first tag, or plain text error
+    return (
+      <div className="bg-gray-700 text-gray-100 max-w-2xl rounded-lg px-4 py-3 text-sm whitespace-pre-wrap">
+        {msg.content || <span className="text-gray-400 animate-pulse">Thinking...</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl space-y-3">
+      {content.planText && (
+        <div className="bg-gray-700 rounded-lg px-4 py-3 text-sm">
+          <p className="text-xs font-semibold text-indigo-400 mb-2 uppercase tracking-wide">Analytical Plan</p>
+          <p className="text-gray-100 whitespace-pre-wrap leading-relaxed">{content.planText}</p>
+        </div>
+      )}
+      {content.sqlText && (
+        <div className="bg-gray-900 border border-gray-600 rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-600">
+            <span className="text-xs font-semibold text-green-400 uppercase tracking-wide">SQL Query</span>
+          </div>
+          <pre className="px-4 py-3 text-sm text-green-300 font-mono overflow-x-auto whitespace-pre-wrap break-all">
+            {content.sqlText}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ChatPage() {
-  const { isLoading, error } = useDatabase();
+  const { isLoading, error, schema } = useDatabase();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -23,10 +90,10 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || isStreaming) return;
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -34,8 +101,50 @@ export default function ChatPage() {
       content: trimmed,
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, userMessage]);
+
+    const assistantId = crypto.randomUUID();
+    const assistantMessage: ChatMessage = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setInput('');
+    setIsStreaming(true);
+
+    let accumulated = '';
+
+    await streamLLMResponse(trimmed, schema, {
+      onChunk: (chunk) => {
+        accumulated += chunk;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, content: accumulated } : m
+          )
+        );
+      },
+      onDone: () => {
+        const structured = parseStreamedContent(accumulated);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, structured } : m
+          )
+        );
+        setIsStreaming(false);
+      },
+      onError: (errMsg) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? { ...m, content: `Error: ${errMsg}` }
+              : m
+          )
+        );
+        setIsStreaming(false);
+      },
+    });
   };
 
   return (
@@ -79,15 +188,13 @@ export default function ChatPage() {
                 key={msg.id}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div
-                  className={`max-w-2xl rounded-lg px-4 py-3 text-sm whitespace-pre-wrap ${
-                    msg.role === 'user'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-700 text-gray-100'
-                  }`}
-                >
-                  {msg.content}
-                </div>
+                {msg.role === 'user' ? (
+                  <div className="max-w-2xl rounded-lg px-4 py-3 text-sm whitespace-pre-wrap bg-indigo-600 text-white">
+                    {msg.content}
+                  </div>
+                ) : (
+                  <AssistantMessage msg={msg} />
+                )}
               </div>
             ))
           )}
@@ -102,14 +209,15 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a question about your data..."
-              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+              disabled={isStreaming}
+              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
             />
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || isStreaming}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             >
-              Send
+              {isStreaming ? 'Streaming...' : 'Send'}
             </button>
           </form>
         </div>
