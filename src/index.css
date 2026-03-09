@@ -1,1 +1,57 @@
 @import "tailwindcss";
+
+/* Forest theme — warm earthy natural colours */
+[data-theme="forest"] {
+  --color-gray-900: #1a1810;
+  --color-gray-800: #242018;
+  --color-gray-750: #2e2a20;
+  --color-gray-700: #383228;
+  --color-gray-600: #4a4236;
+  --color-gray-500: #6e6254;
+  --color-gray-400: #9c8e7c;
+  --color-gray-300: #c0b4a0;
+  --color-gray-200: #d8cfc0;
+  /* Amber accent replacing indigo */
+  --color-indigo-900: #3a2f14;
+  --color-indigo-600: #8a6f2a;
+  --color-indigo-700: #73592a;
+  --color-indigo-500: #9a7f3a;
+  --color-indigo-400: #b49050;
+  --color-indigo-300: #c8a86a;
+  /* Sage green replacing blue (used on login page) */
+  --color-blue-600: #4a7c5a;
+  --color-blue-700: #3d6648;
+  --color-blue-500: #5a8c6a;
+  --color-blue-400: #7aaa88;
+  /* Warm gold replacing green (used for SQL code) */
+  --color-green-400: #c89a38;
+  --color-green-300: #d4ac4e;
+}
+
+/* Nord theme — cool muted Nordic colours */
+[data-theme="nord"] {
+  --color-gray-900: #1a1f2a;
+  --color-gray-800: #20263a;
+  --color-gray-750: #252d44;
+  --color-gray-700: #2e374e;
+  --color-gray-600: #3d4e68;
+  --color-gray-500: #5a7090;
+  --color-gray-400: #7fa0b8;
+  --color-gray-300: #a8c0d0;
+  --color-gray-200: #c4d8e4;
+  /* Nordic frost/teal accent replacing indigo */
+  --color-indigo-900: #1a3044;
+  --color-indigo-600: #2e7a9e;
+  --color-indigo-700: #24678a;
+  --color-indigo-500: #3a8aae;
+  --color-indigo-400: #5aaac8;
+  --color-indigo-300: #7ac0d8;
+  /* Nordic blue replacing blue (used on login page) */
+  --color-blue-600: #2e5e9e;
+  --color-blue-700: #244e88;
+  --color-blue-500: #3a70b4;
+  --color-blue-400: #6098c8;
+  /* Aurora green for SQL code */
+  --color-green-400: #5aae8a;
+  --color-green-300: #72be9c;
+}

@@ -113,3 +113,5 @@ A task is ONLY complete when:
     - openai/gpt-oss-120b
     - google/gemini-3-flash-preview
     - google/gemini-3.1-pro-preview
+- [x] **Task 21:**  Can you make a selection of themes available, with at least one made up of more natural, subtle colours. Also add symbols and text for things like to browser tab and the app icon consistent with this theme.
+- [ ] **Task 22:**   Also add symbols and text for things like to browser tab and the app icon consistent with the function of the web app. 

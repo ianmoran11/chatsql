@@ -3,9 +3,11 @@ import LoginPage from './pages/LoginPage';
 import ChatPage from './pages/ChatPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { DatabaseProvider } from './contexts/DatabaseContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   return (
+    <ThemeProvider>
     <DatabaseProvider>
     <BrowserRouter>
       <Routes>
@@ -22,6 +24,7 @@ function App() {
       </Routes>
     </BrowserRouter>
     </DatabaseProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
+import { THEMES, THEME_LABELS, type Theme } from '../lib/themes';
 
 const API_KEY_STORAGE_KEY = 'openrouter_api_key';
 const MODEL_STORAGE_KEY = 'openrouter_model';
@@ -26,6 +28,8 @@ interface SettingsModalProps {
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState<string>(DEFAULT_MODEL);
+  const { theme: currentTheme, setTheme } = useTheme();
+  const [selectedTheme, setSelectedTheme] = useState<Theme>(currentTheme);
 
   useEffect(() => {
     setApiKey(getApiKey());
@@ -35,6 +39,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const handleSave = () => {
     localStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
     localStorage.setItem(MODEL_STORAGE_KEY, model);
+    setTheme(selectedTheme);
     onClose();
   };
 
@@ -60,6 +65,17 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         >
           {AVAILABLE_MODELS.map((m) => (
             <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+
+        <label className="block text-sm text-gray-400 mb-1">Theme</label>
+        <select
+          value={selectedTheme}
+          onChange={(e) => setSelectedTheme(e.target.value as Theme)}
+          className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 mb-6"
+        >
+          {THEMES.map((t) => (
+            <option key={t} value={t}>{THEME_LABELS[t]}</option>
           ))}
         </select>
 
