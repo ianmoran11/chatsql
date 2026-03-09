@@ -98,5 +98,5 @@ A task is ONLY complete when:
 
 ### Phase 4: Execution & Auditing
 - [x] **Task 12:** Implement Auto-Execution. Once the stream finishes completely, automatically take the extracted string from the `<sql_query>` tag and execute it against the active `sql.js` database.
-- [ ] **Task 13:** Render the results of the executed SQL in a responsive data table directly underneath the code block in the chat UI. Include error handling if the SQL fails.
+- [x] **Task 13:** Render the results of the executed SQL in a responsive data table directly underneath the code block in the chat UI. Include error handling if the SQL fails.
 - [ ] **Task 14:** Implement the local audit log. On successful execution, save the timestamp, user ID, natural language prompt, and SQL into an array, and add an "Export Audit Log" CSV button to the sidebar.
