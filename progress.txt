@@ -1,1 +1,2 @@
 Task 1 (2026-03-09): Initialized Vite + React (TypeScript) project. Installed Tailwind CSS (@tailwindcss/vite), react-router-dom. Set up /login and /chat routes with placeholder pages. App redirects to /login by default. Build passes with no errors.
+Task 2 (2026-03-09): Installed @supabase/supabase-js. Created .env.local with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY placeholders. Created src/lib/supabaseClient.ts that initializes and exports the Supabase client. Build passes with no errors.
