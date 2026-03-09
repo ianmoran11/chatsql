@@ -38,9 +38,15 @@ export interface StreamCallbacks {
   onError: (error: string) => void;
 }
 
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export async function streamLLMResponse(
   prompt: string,
   schema: string,
+  history: ConversationMessage[],
   callbacks: StreamCallbacks
 ): Promise<void> {
   const apiKey = getApiKey();
@@ -66,6 +72,7 @@ export async function streamLLMResponse(
         stream: true,
         messages: [
           { role: 'system', content: systemPrompt },
+          ...history,
           { role: 'user', content: `<Question> ${prompt} </Question>` },
         ],
       }),

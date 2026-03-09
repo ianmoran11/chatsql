@@ -4,7 +4,7 @@ import FileUpload from '../components/FileUpload';
 import SettingsModal from '../components/SettingsModal';
 import SchemaExplorer from '../components/SchemaExplorer';
 import { useDatabase } from '../contexts/DatabaseContext';
-import { streamLLMResponse } from '../lib/llmService';
+import { streamLLMResponse, type ConversationMessage } from '../lib/llmService';
 
 interface AuditEntry {
   timestamp: string;
@@ -169,6 +169,40 @@ function exportAuditLogCSV(auditLog: AuditEntry[]) {
   URL.revokeObjectURL(url);
 }
 
+function buildConversationHistory(messages: ChatMessage[]): ConversationMessage[] {
+  const history: ConversationMessage[] = [];
+  for (const msg of messages) {
+    if (msg.role === 'user') {
+      history.push({ role: 'user', content: `<Question> ${msg.content} </Question>` });
+    } else if (msg.role === 'assistant' && msg.structured) {
+      let content = '';
+      if (msg.structured.planText) {
+        content += `<analytical_plan>\n${msg.structured.planText}\n</analytical_plan>\n`;
+      }
+      if (msg.structured.sqlText) {
+        content += `<sql_query>\n${msg.structured.sqlText}\n</sql_query>\n`;
+      }
+      if (msg.structured.queryError) {
+        content += `Query execution error: ${msg.structured.queryError}`;
+      } else if (msg.structured.queryResult && msg.structured.queryResult.length > 0) {
+        const res = msg.structured.queryResult[0];
+        content += `Query returned ${res.values.length} row(s).\nColumns: ${res.columns.join(', ')}\n`;
+        res.values.slice(0, 5).forEach((row, i) => {
+          const cells = res.columns.map((col, ci) => `${col}: ${row[ci] === null ? 'NULL' : row[ci]}`);
+          content += `Row ${i + 1}: ${cells.join(', ')}\n`;
+        });
+        if (res.values.length > 5) {
+          content += `...and ${res.values.length - 5} more rows.`;
+        }
+      }
+      if (content) {
+        history.push({ role: 'assistant', content: content.trim() });
+      }
+    }
+  }
+  return history;
+}
+
 export default function ChatPage() {
   const { isLoading, error, schema, db } = useDatabase();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -202,13 +236,14 @@ export default function ChatPage() {
       timestamp: new Date(),
     };
 
+    const history = buildConversationHistory(messages);
     setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setInput('');
     setIsStreaming(true);
 
     let accumulated = '';
 
-    await streamLLMResponse(trimmed, schema, {
+    await streamLLMResponse(trimmed, schema, history, {
       onChunk: (chunk) => {
         accumulated += chunk;
         setMessages((prev) =>
@@ -278,6 +313,16 @@ export default function ChatPage() {
             className="text-gray-400 hover:text-white transition-colors"
           >
             ⚙
+          </button>
+        </div>
+
+        <div className="px-4 py-2 border-b border-gray-700">
+          <button
+            onClick={() => setMessages([])}
+            disabled={isStreaming || messages.length === 0}
+            className="w-full bg-gray-700 hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors text-left flex items-center gap-2"
+          >
+            <span>+</span> New Chat
           </button>
         </div>
 
