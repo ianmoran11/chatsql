@@ -4,7 +4,6 @@ const API_KEY_STORAGE_KEY = 'openrouter_api_key';
 const MODEL_STORAGE_KEY = 'openrouter_model';
 
 export const AVAILABLE_MODELS = [
-  'google/gemma-3n-e4b-it',
   'openai/gpt-oss-120b',
   'google/gemini-3-flash-preview',
   'google/gemini-3.1-pro-preview',

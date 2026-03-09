@@ -109,3 +109,7 @@ A task is ONLY complete when:
     - openai/gpt-oss-120b
     - google/gemini-3-flash-preview
     - google/gemini-3.1-pro-preview
+- [x] **Task 20:**  Actually please use offer the following models in this order:
+    - openai/gpt-oss-120b
+    - google/gemini-3-flash-preview
+    - google/gemini-3.1-pro-preview
