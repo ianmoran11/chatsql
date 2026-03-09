@@ -4,6 +4,14 @@ import FileUpload from '../components/FileUpload';
 import SettingsModal from '../components/SettingsModal';
 import { useDatabase } from '../contexts/DatabaseContext';
 import { streamLLMResponse } from '../lib/llmService';
+import { supabase } from '../lib/supabaseClient';
+
+interface AuditEntry {
+  timestamp: string;
+  userId: string;
+  prompt: string;
+  sql: string;
+}
 
 export type MessageRole = 'user' | 'assistant';
 
@@ -143,12 +151,31 @@ function AssistantMessage({ msg }: { msg: ChatMessage }) {
   );
 }
 
+function exportAuditLogCSV(auditLog: AuditEntry[]) {
+  const header = ['Timestamp', 'User ID', 'Prompt', 'SQL'];
+  const rows = auditLog.map((e) => [
+    e.timestamp,
+    e.userId,
+    e.prompt,
+    e.sql,
+  ].map((v) => `"${v.replace(/"/g, '""')}"`));
+  const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `audit_log_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ChatPage() {
   const { isLoading, error, schema, db } = useDatabase();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -190,7 +217,7 @@ export default function ChatPage() {
           )
         );
       },
-      onDone: () => {
+      onDone: async () => {
         const parsed = parseStreamedContent(accumulated);
         let queryResult: QueryExecResult[] | null = null;
         let queryError: string | null = null;
@@ -203,6 +230,19 @@ export default function ChatPage() {
           }
         } else if (parsed.sqlText && !db) {
           queryError = 'No database loaded.';
+        }
+
+        if (parsed.sqlText && !queryError) {
+          const { data: { user } } = await supabase.auth.getUser();
+          setAuditLog((prev) => [
+            ...prev,
+            {
+              timestamp: new Date().toISOString(),
+              userId: user?.id ?? 'unknown',
+              prompt: trimmed,
+              sql: parsed.sqlText,
+            },
+          ]);
         }
 
         const structured: AssistantContent = { ...parsed, queryResult, queryError };
@@ -242,12 +282,22 @@ export default function ChatPage() {
           </button>
         </div>
 
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-4 space-y-4">
           {isLoading && <p className="text-sm text-gray-400">Loading database...</p>}
           {error && <p className="text-sm text-red-400">{error}</p>}
           {!isLoading && !error && (
             <p className="text-sm text-green-400">Database ready</p>
           )}
+          <div>
+            <p className="text-xs text-gray-400 mb-2">{auditLog.length} audit entr{auditLog.length === 1 ? 'y' : 'ies'}</p>
+            <button
+              onClick={() => exportAuditLogCSV(auditLog)}
+              disabled={auditLog.length === 0}
+              className="w-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+            >
+              Export Audit Log CSV
+            </button>
+          </div>
         </div>
 
         <FileUpload />
