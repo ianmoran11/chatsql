@@ -52,7 +52,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setSqlJs(SQL);
 
-        const response = await fetch('/default.sqlite');
+        const response = await fetch('/northwind_small.sqlite');
         if (!response.ok) throw new Error('Failed to fetch default database');
         const buffer = await response.arrayBuffer();
         if (cancelled) return;
