@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import FileUpload from '../components/FileUpload';
+import SettingsModal from '../components/SettingsModal';
 import { useDatabase } from '../contexts/DatabaseContext';
 
 export type MessageRole = 'user' | 'assistant';
@@ -15,6 +16,7 @@ export default function ChatPage() {
   const { isLoading, error } = useDatabase();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,10 +40,18 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {/* Sidebar */}
       <aside className="w-64 bg-gray-800 flex flex-col border-r border-gray-700">
-        <div className="p-4 border-b border-gray-700">
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
           <h1 className="text-lg font-bold text-indigo-400">ChatSQL</h1>
+          <button
+            onClick={() => setShowSettings(true)}
+            title="Settings"
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            ⚙
+          </button>
         </div>
 
         <div className="flex-1 p-4">
