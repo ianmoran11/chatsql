@@ -44,7 +44,7 @@ A task is ONLY complete when:
 ## 3. Implementation Steps
 
 ### Phase 1: Project Scaffolding & Authentication
-- [ ] **Task 1:** Initialize a new Vite + React (TypeScript) project. Set up Tailwind CSS and `react-router-dom`. Set up `/login` and `/chat` routes.
+- [x] **Task 1:** Initialize a new Vite + React (TypeScript) project. Set up Tailwind CSS and `react-router-dom`. Set up `/login` and `/chat` routes.
 - [ ] **Task 2:** Integrate the Supabase SDK using environment variables (`.env.local`).
 - [ ] **Task 3:** Build the Login and Registration UI, wire up the auth logic, and create a Protected Route wrapper for the `/chat` page.
 

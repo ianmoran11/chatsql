@@ -1,0 +1,1 @@
+Task 1 (2026-03-09): Initialized Vite + React (TypeScript) project. Installed Tailwind CSS (@tailwindcss/vite), react-router-dom. Set up /login and /chat routes with placeholder pages. App redirects to /login by default. Build passes with no errors.
