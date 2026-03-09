@@ -306,7 +306,19 @@ export default function ChatPage() {
       {/* Sidebar */}
       <aside className="w-64 bg-gray-800 flex flex-col border-r border-gray-700">
         <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-indigo-400">ChatSQL</h1>
+          <div className="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-7 h-7 flex-shrink-0" aria-hidden="true">
+              <rect width="32" height="32" rx="6" fill="#1e1b4b"/>
+              <ellipse cx="14" cy="10" rx="8" ry="3" fill="#6366f1"/>
+              <rect x="6" y="10" width="16" height="10" fill="#4f46e5"/>
+              <ellipse cx="14" cy="20" rx="8" ry="3" fill="#4338ca"/>
+              <ellipse cx="14" cy="15" rx="8" ry="3" fill="none" stroke="#a5b4fc" strokeWidth="0.7" opacity="0.5"/>
+              <rect x="20" y="2" width="11" height="8" rx="2" fill="#10b981"/>
+              <polygon points="22,10 20,13 25,10" fill="#10b981"/>
+              <text x="25.5" y="8.5" textAnchor="middle" fill="white" fontSize="4.5" fontFamily="monospace" fontWeight="bold">SQL</text>
+            </svg>
+            <h1 className="text-lg font-bold text-indigo-400">ChatSQL</h1>
+          </div>
           <button
             onClick={() => setShowSettings(true)}
             title="Settings"

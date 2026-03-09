@@ -1,0 +1,17 @@
+{
+  "name": "ChatSQL — Query Your Database",
+  "short_name": "ChatSQL",
+  "description": "A conversational AI interface for querying SQLite databases using natural language.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
