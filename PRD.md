@@ -51,7 +51,7 @@ A task is ONLY complete when:
 ### Phase 2: WebAssembly SQLite & Schema Management
 - [x] **Task 4:** Install `sql.js` and copy `sql-wasm.wasm` to the `public/` directory. Create a `DatabaseContext` to hold the active instance.
 - [x] **Task 5:** Add a default dummy `.sqlite` database to `public/`. Write a function to load it via `ArrayBuffer` on startup.
-- [ ] **Task 6:** Create a File Upload component in the sidebar to let users replace the default database with their own `.sqlite` file via the FileReader API.
+- [x] **Task 6:** Create a File Upload component in the sidebar to let users replace the default database with their own `.sqlite` file via the FileReader API.
 - [ ] **Task 7:** Implement an automatic schema extractor (`SELECT sql FROM sqlite_master;`). Store this DDL in state to pass to the LLM.
 
 ### Phase 3: The Plan-to-SQL Streaming Pipeline
