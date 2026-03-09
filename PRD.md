@@ -100,3 +100,7 @@ A task is ONLY complete when:
 - [x] **Task 12:** Implement Auto-Execution. Once the stream finishes completely, automatically take the extracted string from the `<sql_query>` tag and execute it against the active `sql.js` database.
 - [x] **Task 13:** Render the results of the executed SQL in a responsive data table directly underneath the code block in the chat UI. Include error handling if the SQL fails.
 - [x] **Task 14:** Implement the local audit log. On successful execution, save the timestamp, user ID, natural language prompt, and SQL into an array, and add an "Export Audit Log" CSV button to the sidebar.
+- [ ] **Task 15:** (Note the the signup/authentication has been removed as this was impeding testing. Can you replace it with the requirement of entering a password "p@ssw0rd" that is shared by all users)
+- [ ] **Task 16:** Can you start sessions with the northwind_small.sqlite (in main folder) database loaded?
+- [ ] **Task 17:**  Can you ensure that the tables, their columns and any associated metadata of the active sqlite database is presented in the left sidebar. You can make this expandable, with only table names presented initially. 
+- [ ] **Task 18:** Can you append previous questions and results to new prompts so that answers to previous questions can be referred to in new questions. Also offer the option to start a new chat to clear the context. 
