@@ -104,3 +104,8 @@ A task is ONLY complete when:
 - [x] **Task 16:** Can you start sessions with the northwind_small.sqlite (in main folder) database loaded?
 - [x] **Task 17:**  Can you ensure that the tables, their columns and any associated metadata of the active sqlite database is presented in the left sidebar. You can make this expandable, with only table names presented initially.
 - [x] **Task 18:** Can you append previous questions and results to new prompts so that answers to previous questions can be referred to in new questions. Also offer the option to start a new chat to clear the context.
+- [x] **Task 19:** Can you allow the user to choose which model they use from openAI.  Please add this option in the same place you specify the openrouterAPI key. Please use offer the following models in this order:  
+    - google/gemma-3n-e4b-it
+    - openai/gpt-oss-120b
+    - google/gemini-3-flash-preview
+    - google/gemini-3.1-pro-preview

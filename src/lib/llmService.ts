@@ -1,7 +1,6 @@
-import { getApiKey } from '../components/SettingsModal';
+import { getApiKey, getModel } from '../components/SettingsModal';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'openai/gpt-4o-mini';
 
 function buildSystemPrompt(schema: string): string {
   return `You are an expert SQLite database analyst. Your task is to translate natural language questions into accurate, executable SQLite queries based strictly on the provided database schema.
@@ -68,7 +67,7 @@ export async function streamLLMResponse(
         'X-Title': 'ChatSQL',
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: getModel(),
         stream: true,
         messages: [
           { role: 'system', content: systemPrompt },

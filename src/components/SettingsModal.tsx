@@ -1,9 +1,23 @@
 import { useState, useEffect } from 'react';
 
 const API_KEY_STORAGE_KEY = 'openrouter_api_key';
+const MODEL_STORAGE_KEY = 'openrouter_model';
+
+export const AVAILABLE_MODELS = [
+  'google/gemma-3n-e4b-it',
+  'openai/gpt-oss-120b',
+  'google/gemini-3-flash-preview',
+  'google/gemini-3.1-pro-preview',
+] as const;
+
+export const DEFAULT_MODEL = AVAILABLE_MODELS[0];
 
 export function getApiKey(): string {
   return localStorage.getItem(API_KEY_STORAGE_KEY) ?? '';
+}
+
+export function getModel(): string {
+  return localStorage.getItem(MODEL_STORAGE_KEY) ?? DEFAULT_MODEL;
 }
 
 interface SettingsModalProps {
@@ -12,13 +26,16 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('');
+  const [model, setModel] = useState<string>(DEFAULT_MODEL);
 
   useEffect(() => {
     setApiKey(getApiKey());
+    setModel(getModel());
   }, []);
 
   const handleSave = () => {
     localStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
+    localStorage.setItem(MODEL_STORAGE_KEY, model);
     onClose();
   };
 
@@ -35,6 +52,17 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           placeholder="sk-or-..."
           className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 mb-4"
         />
+
+        <label className="block text-sm text-gray-400 mb-1">Model</label>
+        <select
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 mb-4"
+        >
+          {AVAILABLE_MODELS.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
 
         <div className="flex justify-end gap-3">
           <button
