@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const SHARED_PASSWORD = 'p@ssw0rd';
+const SHARED_PASSWORD = import.meta.env.VITE_APP_PASSWORD as string;
 const API_KEY_STORAGE_KEY = 'openrouter_api_key';
 
 export default function LoginPage() {
