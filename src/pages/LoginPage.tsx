@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const SHARED_PASSWORD = 'p@ssw0rd';
+const API_KEY_STORAGE_KEY = 'openrouter_api_key';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
+  const [apiKey, setApiKey] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -13,6 +15,8 @@ export default function LoginPage() {
     if (localStorage.getItem('chatsql_auth') === 'true') {
       navigate('/chat', { replace: true });
     }
+    // Pre-fill API key if already saved
+    setApiKey(localStorage.getItem(API_KEY_STORAGE_KEY) ?? '');
   }, [navigate]);
 
   function handleSubmit(e: React.FormEvent) {
@@ -22,6 +26,9 @@ export default function LoginPage() {
 
     if (password === SHARED_PASSWORD) {
       localStorage.setItem('chatsql_auth', 'true');
+      if (apiKey.trim()) {
+        localStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
+      }
       navigate('/chat', { replace: true });
     } else {
       setError('Incorrect password. Please try again.');
@@ -52,6 +59,24 @@ export default function LoginPage() {
               placeholder="••••••••"
               autoFocus
             />
+          </div>
+
+          <div>
+            <label htmlFor="apiKey" className="block text-sm font-medium text-gray-300 mb-1">
+              OpenRouter API Key{' '}
+              <span className="text-gray-500 font-normal">(optional)</span>
+            </label>
+            <input
+              id="apiKey"
+              type="password"
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              className="w-full bg-gray-700 text-white rounded-lg px-4 py-2.5 border border-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-500"
+              placeholder="sk-or-..."
+            />
+            <p className="text-gray-500 text-xs mt-1">
+              Can also be set later in Settings.
+            </p>
           </div>
 
           {error && (
