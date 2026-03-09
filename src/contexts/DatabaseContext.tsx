@@ -9,6 +9,7 @@ interface DatabaseContextType {
   sqlJs: SqlJsStatic | null;
   isLoading: boolean;
   error: string | null;
+  schema: string;
 }
 
 const DatabaseContext = createContext<DatabaseContextType | null>(null);
@@ -22,6 +23,25 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [sqlJs, setSqlJs] = useState<SqlJsStatic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [schema, setSchema] = useState<string>('');
+
+  useEffect(() => {
+    if (!db) {
+      setSchema('');
+      return;
+    }
+    try {
+      const results = db.exec("SELECT sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY type, name");
+      if (results.length > 0) {
+        const ddl = (results[0].values as string[][]).map(row => row[0]).join('\n\n');
+        setSchema(ddl);
+      } else {
+        setSchema('');
+      }
+    } catch {
+      setSchema('');
+    }
+  }, [db]);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +71,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DatabaseContext.Provider value={{ db, setDb, sqlJs, isLoading, error }}>
+    <DatabaseContext.Provider value={{ db, setDb, sqlJs, isLoading, error, schema }}>
       {children}
     </DatabaseContext.Provider>
   );
