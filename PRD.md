@@ -57,7 +57,7 @@ A task is ONLY complete when:
 ### Phase 3: The Plan-to-SQL Streaming Pipeline
 - [x] **Task 8:** Create the Chat UI layout. Include a message history area and an input field.
 - [x] **Task 9:** Implement a Settings modal for the user to input and save their OpenRouter API Key to `localStorage`.
-- [ ] **Task 10:** Create an `llmService.ts` function that calls the OpenRouter API with streaming enabled. The system prompt MUST instruct the model to always respond in two distinct sections: first, an `<analytical_plan>` tag containing a natural language step-by-step reasoning of how to solve the prompt using the schema, followed by a `<sql_query>` tag containing ONLY the raw SQL. Here's the prompt:
+- [x] **Task 10:** Create an `llmService.ts` function that calls the OpenRouter API with streaming enabled. The system prompt MUST instruct the model to always respond in two distinct sections: first, an `<analytical_plan>` tag containing a natural language step-by-step reasoning of how to solve the prompt using the schema, followed by a `<sql_query>` tag containing ONLY the raw SQL. Here's the prompt:
     "You are an expert SQLite database analyst. Your task is to translate natural language questions into accurate, executable SQLite queries based strictly on the provided database schema.
 
     ### Data Governance & Execution Rules:
