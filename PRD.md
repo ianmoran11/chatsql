@@ -116,5 +116,5 @@ A task is ONLY complete when:
 - [x] **Task 21:**  Can you make a selection of themes available, with at least one made up of more natural, subtle colours. Also add symbols and text for things like to browser tab and the app icon consistent with this theme.
 - [x] **Task 22:**   Also add symbols and text for things like to browser tab and the app icon consistent with the function of the web app.
 - [x] **Task 23:**  I tried the app on another computer, and there was an issue with size. I could not see the bottom of the screen and therefore the text input box if I did not scroll down. And if I scroll down, I can't see the top banner and feel a bit lost. Can you make the sizing more dynamic to fix this?
-
-- [x] **Task 23:** Could you also ask for the openrouter api at the same time as the password, though make it optional?
+- [x] **Task 24:** Could you also ask for the openrouter api at the same time as the password, though make it optional?
+- [x] **Task 25:** Could you add a warning on the password page along a banner across the top of the chat page that says: "This application is for demonstration purposes only. Do no enter personal, sensitive, or official information."

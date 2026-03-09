@@ -40,9 +40,12 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
         <h1 className="text-3xl font-bold text-white mb-2 text-center">ChatSQL</h1>
-        <p className="text-gray-400 text-center mb-8 text-sm">
+        <p className="text-gray-400 text-center mb-4 text-sm">
           Conversational SQL query interface
         </p>
+        <div className="bg-amber-900/50 border border-amber-700 text-amber-300 rounded-lg px-4 py-3 text-xs text-center mb-6">
+          This application is for demonstration purposes only. Do not enter personal, sensitive, or official information.
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -361,6 +361,10 @@ export default function ChatPage() {
 
       {/* Main chat area */}
       <main className="flex-1 flex flex-col">
+        {/* Warning banner */}
+        <div className="bg-amber-900/60 border-b border-amber-700 px-4 py-2 text-amber-300 text-xs text-center flex-shrink-0">
+          This application is for demonstration purposes only. Do not enter personal, sensitive, or official information.
+        </div>
         {/* Message history */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.length === 0 ? (
