@@ -46,7 +46,7 @@ A task is ONLY complete when:
 ### Phase 1: Project Scaffolding & Authentication
 - [x] **Task 1:** Initialize a new Vite + React (TypeScript) project. Set up Tailwind CSS and `react-router-dom`. Set up `/login` and `/chat` routes.
 - [x] **Task 2:** Integrate the Supabase SDK using environment variables (`.env.local`).
-- [ ] **Task 3:** Build the Login and Registration UI, wire up the auth logic, and create a Protected Route wrapper for the `/chat` page.
+- [x] **Task 3:** Build the Login and Registration UI, wire up the auth logic, and create a Protected Route wrapper for the `/chat` page.
 
 ### Phase 2: WebAssembly SQLite & Schema Management
 - [ ] **Task 4:** Install `sql.js` and copy `sql-wasm.wasm` to the `public/` directory. Create a `DatabaseContext` to hold the active instance.
