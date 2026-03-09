@@ -4,7 +4,6 @@ import FileUpload from '../components/FileUpload';
 import SettingsModal from '../components/SettingsModal';
 import { useDatabase } from '../contexts/DatabaseContext';
 import { streamLLMResponse } from '../lib/llmService';
-import { supabase } from '../lib/supabaseClient';
 
 interface AuditEntry {
   timestamp: string;
@@ -233,12 +232,11 @@ export default function ChatPage() {
         }
 
         if (parsed.sqlText && !queryError) {
-          const { data: { user } } = await supabase.auth.getUser();
           setAuditLog((prev) => [
             ...prev,
             {
               timestamp: new Date().toISOString(),
-              userId: user?.id ?? 'unknown',
+              userId: 'local-user',
               prompt: trimmed,
               sql: parsed.sqlText,
             },
