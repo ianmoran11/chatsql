@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import type { QueryExecResult } from 'sql.js';
 import FileUpload from '../components/FileUpload';
 import SettingsModal from '../components/SettingsModal';
 import { useDatabase } from '../contexts/DatabaseContext';
@@ -10,6 +11,8 @@ export interface AssistantContent {
   planText: string;
   sqlText: string;
   raw: string;
+  queryResult?: QueryExecResult[] | null;
+  queryError?: string | null;
 }
 
 export interface ChatMessage {
@@ -79,7 +82,7 @@ function AssistantMessage({ msg }: { msg: ChatMessage }) {
 }
 
 export default function ChatPage() {
-  const { isLoading, error, schema } = useDatabase();
+  const { isLoading, error, schema, db } = useDatabase();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -126,7 +129,21 @@ export default function ChatPage() {
         );
       },
       onDone: () => {
-        const structured = parseStreamedContent(accumulated);
+        const parsed = parseStreamedContent(accumulated);
+        let queryResult: QueryExecResult[] | null = null;
+        let queryError: string | null = null;
+
+        if (parsed.sqlText && db) {
+          try {
+            queryResult = db.exec(parsed.sqlText);
+          } catch (err) {
+            queryError = err instanceof Error ? err.message : String(err);
+          }
+        } else if (parsed.sqlText && !db) {
+          queryError = 'No database loaded.';
+        }
+
+        const structured: AssistantContent = { ...parsed, queryResult, queryError };
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId ? { ...m, structured } : m
