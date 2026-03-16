@@ -121,4 +121,4 @@ A task is ONLY complete when:
 - [x] **Task 26:** Can you introduce the option for a chart to be made of the table after it is produced by the query? I'd like, via an api call, the agent to determine the most appropropriate chart and have it rendered using vegalite.
 - [x] **Task 27:** Can you introduce the option for the table to be interpretted in natural language.
 - [x] **Task 28:** Can you allow the user to request a tts generation of the natural language interpretation, involving a call to the deepinfra kokoro82m tts model.
-
+- [x] **Task 29:** Can you make the size of the vegalite chart more dynamic so that it fits the width and height of the box in which it is placed? 
