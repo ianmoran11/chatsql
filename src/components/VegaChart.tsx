@@ -3,6 +3,27 @@ import type { View } from 'vega';
 import { useTheme } from '../contexts/ThemeContext';
 import { VEGA_THEME_CONFIGS } from '../lib/themes';
 
+// Deep merge: override wins over base; theme always overrides spec config for style properties
+function deepMerge(
+  base: Record<string, unknown>,
+  override: Record<string, unknown>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...base };
+  for (const key of Object.keys(override)) {
+    const ov = override[key];
+    const bv = result[key];
+    if (
+      typeof ov === 'object' && ov !== null && !Array.isArray(ov) &&
+      typeof bv === 'object' && bv !== null && !Array.isArray(bv)
+    ) {
+      result[key] = deepMerge(bv as Record<string, unknown>, ov as Record<string, unknown>);
+    } else {
+      result[key] = ov;
+    }
+  }
+  return result;
+}
+
 export default function VegaChart({ spec }: { spec: object }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<View | null>(null);
@@ -19,11 +40,9 @@ export default function VegaChart({ spec }: { spec: object }) {
     const hasExplicitHeight =
       specRecord.height !== undefined && specRecord.height !== 'container';
 
-    // Merge: theme config is the base, spec's own config overrides it
-    const mergedConfig: Record<string, unknown> = {
-      ...themeConfig,
-      ...(specRecord.config as Record<string, unknown> | undefined),
-    };
+    // Deep merge: spec config is base (structural props), theme config overrides (colors/style always win)
+    const specConfig = (specRecord.config as Record<string, unknown> | undefined) ?? {};
+    const mergedConfig = deepMerge(specConfig, themeConfig);
 
     const responsiveSpec: Record<string, unknown> = {
       ...specRecord,

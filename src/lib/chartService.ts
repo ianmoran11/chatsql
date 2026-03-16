@@ -30,11 +30,27 @@ CRITICAL RULES:
 1. Return ONLY a valid JSON Vega-Lite v5 specification — no explanation, no markdown code fences, no extra text.
 2. Do NOT include any data values in the spec. Set "data" to exactly: {"name": "table"}
    The actual data will be injected programmatically after you return the spec.
-3. Choose the best mark type (bar, line, point, arc, etc.) based on the data shape and question.
-4. Include a descriptive title.
-5. Use axis labels that match the column names exactly as provided.
-6. The encoding fields must reference the exact column names provided.
-7. The spec must be valid Vega-Lite v5 renderable by vega-embed.`;
+3. The encoding fields must reference the exact column names provided exactly as given.
+4. The spec must be valid Vega-Lite v5 renderable by vega-embed.
+5. Do NOT include a "config" block and do NOT set any color, background, fill, stroke, font, or text-color properties anywhere in the spec. The application applies its own visual theme — any colors you add will break the theme and produce unreadable text on dark backgrounds.
+6. Do NOT set "background" at the top level or inside any nested object.
+
+CHART SELECTION BEST PRACTICES:
+- Bar chart: comparing discrete categories (most common). Use horizontal bars ("mark": "bar" with x=quantitative, y=nominal) when category labels are long.
+- Sorted bars: ALWAYS sort bar charts by value. For vertical bars add "sort": "-y" on the x encoding. For horizontal bars add "sort": "-x" on the y encoding.
+- Line chart: time series or sequential ordered data only.
+- Scatter/point: relationship between two numeric variables.
+- Arc/pie: part-to-whole composition with 5 or fewer categories only.
+- Avoid pie charts for more than 5 slices — use a sorted bar chart instead.
+
+AESTHETICS BEST PRACTICES:
+- Include a concise, descriptive title.
+- Use human-readable axis titles (not raw column names) — set "title" on each encoding channel.
+- For categorical axes with labels longer than 10 characters, rotate labels: add "axis": {"labelAngle": -30} on that encoding.
+- Use "aggregate" in encodings (e.g. "aggregate": "sum") when the data has multiple rows per category.
+- Keep the spec minimal — omit tooltips, legends, or extra layers unless they add clear value.
+- For bar charts, set "bandPaddingInner": 0.2 at the mark level for comfortable spacing.`;
+
 
   const userPrompt = `Question: "${question}"
 
@@ -85,6 +101,10 @@ Return the Vega-Lite spec now. Remember: set "data": {"name": "table"} and do no
 
   // Programmatically inject the real data from the SQL result, ignoring whatever the LLM may have set
   spec.data = { values: dataRows };
+
+  // Strip any LLM-injected styling that would conflict with the app theme
+  delete spec.config;
+  delete spec.background;
 
   return spec;
 }
