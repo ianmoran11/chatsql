@@ -36,22 +36,23 @@ export default function VegaChart({ spec }: { spec: object }) {
     const specRecord = spec as Record<string, unknown>;
     const themeConfig = VEGA_THEME_CONFIGS[theme];
 
-    // Make width responsive; preserve spec height if provided, otherwise use a sensible default
-    const hasExplicitHeight =
-      specRecord.height !== undefined && specRecord.height !== 'container';
-
     // Deep merge: spec config is base (structural props), theme config overrides (colors/style always win)
     const specConfig = (specRecord.config as Record<string, unknown> | undefined) ?? {};
     const mergedConfig = deepMerge(specConfig, themeConfig);
 
+    // Use fit-x so width fills the container but height is computed by Vega from content
+    // This prevents squishing on charts with many categories
     const responsiveSpec: Record<string, unknown> = {
       ...specRecord,
       width: 'container' as const,
-      height: hasExplicitHeight ? specRecord.height : 350,
-      autosize: { type: 'fit', contains: 'padding' },
+      autosize: { type: 'fit-x', contains: 'padding' },
       background: themeConfig.background,
       config: mergedConfig,
     };
+    // Remove any height: 'container' from the spec so Vega computes a natural height
+    if (responsiveSpec.height === 'container') {
+      delete responsiveSpec.height;
+    }
 
     import('vega-embed').then(({ default: embed }) => {
       if (cancelled || !containerRef.current) return;
@@ -110,5 +111,5 @@ export default function VegaChart({ spec }: { spec: object }) {
     return () => observer.disconnect();
   }, []);
 
-  return <div ref={containerRef} className="w-full" />;
+  return <div ref={containerRef} className="w-full" style={{ minHeight: '200px' }} />;
 }
