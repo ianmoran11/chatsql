@@ -3,8 +3,10 @@ import type { QueryExecResult } from 'sql.js';
 import FileUpload from '../components/FileUpload';
 import SettingsModal from '../components/SettingsModal';
 import SchemaExplorer from '../components/SchemaExplorer';
+import VegaChart from '../components/VegaChart';
 import { useDatabase } from '../contexts/DatabaseContext';
 import { streamLLMResponse, type ConversationMessage } from '../lib/llmService';
+import { generateChartSpec } from '../lib/chartService';
 
 interface AuditEntry {
   timestamp: string;
@@ -21,6 +23,8 @@ export interface AssistantContent {
   raw: string;
   queryResult?: QueryExecResult[] | null;
   queryError?: string | null;
+  chartSpec?: object | null;
+  chartError?: string | null;
 }
 
 export interface ChatMessage {
@@ -107,9 +111,23 @@ function QueryResultTable({ result }: { result: QueryExecResult[] }) {
   );
 }
 
-function AssistantMessage({ msg }: { msg: ChatMessage }) {
+function AssistantMessage({
+  msg,
+  onGenerateChart,
+  isGeneratingChart,
+}: {
+  msg: ChatMessage;
+  onGenerateChart?: (msgId: string) => void;
+  isGeneratingChart?: boolean;
+}) {
   const content = msg.structured ?? parseStreamedContent(msg.content);
   const hasStructure = content.planText || content.sqlText;
+
+  const hasChartableData =
+    content.queryResult &&
+    !content.queryError &&
+    content.queryResult.length > 0 &&
+    content.queryResult[0].values.length > 0;
 
   if (!hasStructure) {
     // Still accumulating before first tag, or plain text error
@@ -146,6 +164,39 @@ function AssistantMessage({ msg }: { msg: ChatMessage }) {
       )}
       {content.queryResult && !content.queryError && (
         <QueryResultTable result={content.queryResult} />
+      )}
+      {hasChartableData && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onGenerateChart?.(msg.id)}
+              disabled={isGeneratingChart}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-violet-700 hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors flex items-center gap-1.5"
+            >
+              {isGeneratingChart ? (
+                <>
+                  <span className="animate-spin inline-block w-3 h-3 border border-white border-t-transparent rounded-full" />
+                  Generating chart…
+                </>
+              ) : content.chartSpec ? (
+                '↺ Regenerate Chart'
+              ) : (
+                '📊 Generate Chart'
+              )}
+            </button>
+          </div>
+          {content.chartError && (
+            <div className="bg-red-900/40 border border-red-700 rounded-lg px-4 py-3 text-sm">
+              <p className="text-xs font-semibold text-red-400 mb-1 uppercase tracking-wide">Chart Error</p>
+              <p className="text-red-300 font-mono text-xs">{content.chartError}</p>
+            </div>
+          )}
+          {content.chartSpec && !content.chartError && (
+            <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
+              <VegaChart spec={content.chartSpec} />
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -210,6 +261,7 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
+  const [generatingChartFor, setGeneratingChartFor] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -300,6 +352,48 @@ export default function ChatPage() {
     });
   };
 
+  const handleGenerateChart = async (msgId: string) => {
+    const msg = messages.find((m) => m.id === msgId);
+    if (!msg?.structured?.queryResult?.length) return;
+
+    const result = msg.structured.queryResult[0];
+    const question = (() => {
+      const idx = messages.findIndex((m) => m.id === msgId);
+      for (let i = idx - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') return messages[i].content;
+      }
+      return '';
+    })();
+
+    setGeneratingChartFor((prev) => new Set(prev).add(msgId));
+
+    try {
+      const chartSpec = await generateChartSpec(question, result);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? { ...m, structured: { ...m.structured!, chartSpec, chartError: null } }
+            : m
+        )
+      );
+    } catch (err) {
+      const chartError = err instanceof Error ? err.message : String(err);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? { ...m, structured: { ...m.structured!, chartSpec: null, chartError } }
+            : m
+        )
+      );
+    } finally {
+      setGeneratingChartFor((prev) => {
+        const next = new Set(prev);
+        next.delete(msgId);
+        return next;
+      });
+    }
+  };
+
   return (
     <div className="h-screen bg-gray-900 text-white flex overflow-hidden">
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
@@ -382,7 +476,11 @@ export default function ChatPage() {
                     {msg.content}
                   </div>
                 ) : (
-                  <AssistantMessage msg={msg} />
+                  <AssistantMessage
+                    msg={msg}
+                    onGenerateChart={handleGenerateChart}
+                    isGeneratingChart={generatingChartFor.has(msg.id)}
+                  />
                 )}
               </div>
             ))
