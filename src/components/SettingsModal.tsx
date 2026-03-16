@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { THEMES, THEME_LABELS, type Theme } from '../lib/themes';
+import { DEEPINFRA_KEY_STORAGE, getDeepInfraKey } from '../lib/ttsService';
 
 const API_KEY_STORAGE_KEY = 'openrouter_api_key';
 const MODEL_STORAGE_KEY = 'openrouter_model';
@@ -27,17 +28,20 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('');
+  const [deepInfraKey, setDeepInfraKey] = useState('');
   const [model, setModel] = useState<string>(DEFAULT_MODEL);
   const { theme: currentTheme, setTheme } = useTheme();
   const [selectedTheme, setSelectedTheme] = useState<Theme>(currentTheme);
 
   useEffect(() => {
     setApiKey(getApiKey());
+    setDeepInfraKey(getDeepInfraKey());
     setModel(getModel());
   }, []);
 
   const handleSave = () => {
     localStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
+    localStorage.setItem(DEEPINFRA_KEY_STORAGE, deepInfraKey.trim());
     localStorage.setItem(MODEL_STORAGE_KEY, model);
     setTheme(selectedTheme);
     onClose();
@@ -54,6 +58,18 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           placeholder="sk-or-..."
+          className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 mb-4"
+        />
+
+        <label className="block text-sm text-gray-400 mb-1">
+          DeepInfra API Key{' '}
+          <span className="text-gray-500 font-normal">(optional – required for TTS)</span>
+        </label>
+        <input
+          type="password"
+          value={deepInfraKey}
+          onChange={(e) => setDeepInfraKey(e.target.value)}
+          placeholder="Your DeepInfra API key"
           className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 mb-4"
         />
 

@@ -120,5 +120,5 @@ A task is ONLY complete when:
 - [x] **Task 25:** Could you add a warning on the password page along a banner across the top of the chat page that says: "This application is for demonstration purposes only. Do no enter personal, sensitive, or official information."
 - [x] **Task 26:** Can you introduce the option for a chart to be made of the table after it is produced by the query? I'd like, via an api call, the agent to determine the most appropropriate chart and have it rendered using vegalite.
 - [x] **Task 27:** Can you introduce the option for the table to be interpretted in natural language.
-- [ ] **Task 28:** Can you allow the user to request a tts generation of the natural language interpretation, involving a call to the deepinfra kokoro82m tts model. 
+- [x] **Task 28:** Can you allow the user to request a tts generation of the natural language interpretation, involving a call to the deepinfra kokoro82m tts model.
 

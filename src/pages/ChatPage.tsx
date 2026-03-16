@@ -8,6 +8,7 @@ import { useDatabase } from '../contexts/DatabaseContext';
 import { streamLLMResponse, type ConversationMessage } from '../lib/llmService';
 import { generateChartSpec } from '../lib/chartService';
 import { interpretResults } from '../lib/interpretationService';
+import { generateTTS } from '../lib/ttsService';
 
 interface AuditEntry {
   timestamp: string;
@@ -28,6 +29,8 @@ export interface AssistantContent {
   chartError?: string | null;
   interpretation?: string | null;
   interpretationError?: string | null;
+  ttsAudioUrl?: string | null;
+  ttsError?: string | null;
 }
 
 export interface ChatMessage {
@@ -120,12 +123,16 @@ function AssistantMessage({
   isGeneratingChart,
   onInterpret,
   isInterpreting,
+  onListen,
+  isGeneratingTTS,
 }: {
   msg: ChatMessage;
   onGenerateChart?: (msgId: string) => void;
   isGeneratingChart?: boolean;
   onInterpret?: (msgId: string) => void;
   isInterpreting?: boolean;
+  onListen?: (msgId: string) => void;
+  isGeneratingTTS?: boolean;
 }) {
   const content = msg.structured ?? parseStreamedContent(msg.content);
   const hasStructure = content.planText || content.sqlText;
@@ -227,8 +234,28 @@ function AssistantMessage({
           )}
           {content.interpretation && !content.interpretationError && (
             <div className="bg-teal-900/30 border border-teal-700 rounded-lg px-4 py-3 text-sm">
-              <p className="text-xs font-semibold text-teal-400 mb-2 uppercase tracking-wide">Natural Language Interpretation</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-teal-400 uppercase tracking-wide">Natural Language Interpretation</p>
+                <button
+                  onClick={() => onListen?.(msg.id)}
+                  disabled={isGeneratingTTS}
+                  title="Listen to interpretation"
+                  className="text-xs font-medium px-3 py-1 rounded-lg bg-teal-700 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors flex items-center gap-1.5"
+                >
+                  {isGeneratingTTS ? (
+                    <>
+                      <span className="animate-spin inline-block w-3 h-3 border border-white border-t-transparent rounded-full" />
+                      Generating…
+                    </>
+                  ) : (
+                    '🔊 Listen'
+                  )}
+                </button>
+              </div>
               <p className="text-gray-100 whitespace-pre-wrap leading-relaxed">{content.interpretation}</p>
+              {content.ttsError && (
+                <p className="text-red-400 text-xs mt-2">TTS error: {content.ttsError}</p>
+              )}
             </div>
           )}
         </div>
@@ -298,6 +325,7 @@ export default function ChatPage() {
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [generatingChartFor, setGeneratingChartFor] = useState<Set<string>>(new Set());
   const [interpretingFor, setInterpretingFor] = useState<Set<string>>(new Set());
+  const [generatingTTSFor, setGeneratingTTSFor] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -472,6 +500,46 @@ export default function ChatPage() {
     }
   };
 
+  const handleListen = async (msgId: string) => {
+    const msg = messages.find((m) => m.id === msgId);
+    if (!msg?.structured?.interpretation) return;
+
+    // If we already have a URL, just replay it
+    if (msg.structured.ttsAudioUrl) {
+      new Audio(msg.structured.ttsAudioUrl).play();
+      return;
+    }
+
+    setGeneratingTTSFor((prev) => new Set(prev).add(msgId));
+
+    try {
+      const ttsAudioUrl = await generateTTS(msg.structured.interpretation);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? { ...m, structured: { ...m.structured!, ttsAudioUrl, ttsError: null } }
+            : m
+        )
+      );
+      new Audio(ttsAudioUrl).play();
+    } catch (err) {
+      const ttsError = err instanceof Error ? err.message : String(err);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? { ...m, structured: { ...m.structured!, ttsAudioUrl: null, ttsError } }
+            : m
+        )
+      );
+    } finally {
+      setGeneratingTTSFor((prev) => {
+        const next = new Set(prev);
+        next.delete(msgId);
+        return next;
+      });
+    }
+  };
+
   return (
     <div className="h-screen bg-gray-900 text-white flex overflow-hidden">
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
@@ -560,6 +628,8 @@ export default function ChatPage() {
                     isGeneratingChart={generatingChartFor.has(msg.id)}
                     onInterpret={handleInterpret}
                     isInterpreting={interpretingFor.has(msg.id)}
+                    onListen={handleListen}
+                    isGeneratingTTS={generatingTTSFor.has(msg.id)}
                   />
                 )}
               </div>
