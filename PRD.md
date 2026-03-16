@@ -128,4 +128,4 @@ A task is ONLY complete when:
 - [x] **Task 33:** For some reason, this seems to have affected the theme - for example, I can read the black text against the dark background. It's also not order the bars. Can you add some context around best-practice visualisaiton practices to improve the choice of chart design and aesthetics?
 - [x] **Task 34:** This is better, but I'm now getting a squished chart. Can you see whether this can be addressed in a dynamic way?
 - [x] **Task 35:** Can you add a prompt for the analysis text to make it plain langugae and suitable for tts.
-- [ ] **Task 36:** Can you make the ANALYTICAL PLAN and the SQL QUERY collapse after they are finished generating, while keeping them expandable. 
+- [x] **Task 36:** Can you make the ANALYTICAL PLAN and the SQL QUERY collapse after they are finished generating, while keeping them expandable.

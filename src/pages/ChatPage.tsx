@@ -134,6 +134,18 @@ function AssistantMessage({
   onListen?: (msgId: string) => void;
   isGeneratingTTS?: boolean;
 }) {
+  const isStreaming = !msg.structured;
+  const [planOpen, setPlanOpen] = useState(true);
+  const [sqlOpen, setSqlOpen] = useState(true);
+
+  // Auto-collapse both sections once streaming finishes
+  useEffect(() => {
+    if (msg.structured) {
+      setPlanOpen(false);
+      setSqlOpen(false);
+    }
+  }, [msg.structured]);
+
   const content = msg.structured ?? parseStreamedContent(msg.content);
   const hasStructure = content.planText || content.sqlText;
 
@@ -155,19 +167,35 @@ function AssistantMessage({
   return (
     <div className="max-w-3xl space-y-3">
       {content.planText && (
-        <div className="bg-gray-700 rounded-lg px-4 py-3 text-sm">
-          <p className="text-xs font-semibold text-indigo-400 mb-2 uppercase tracking-wide">Analytical Plan</p>
-          <p className="text-gray-100 whitespace-pre-wrap leading-relaxed">{content.planText}</p>
+        <div className="bg-gray-700 rounded-lg overflow-hidden text-sm">
+          <button
+            onClick={() => setPlanOpen((o) => !o)}
+            className="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-600 transition-colors"
+          >
+            <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wide">Analytical Plan</span>
+            <span className="text-gray-400 text-xs">{planOpen ? '▲ collapse' : '▼ expand'}</span>
+          </button>
+          {(planOpen || isStreaming) && (
+            <div className="px-4 pb-3">
+              <p className="text-gray-100 whitespace-pre-wrap leading-relaxed">{content.planText}</p>
+            </div>
+          )}
         </div>
       )}
       {content.sqlText && (
         <div className="bg-gray-900 border border-gray-600 rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-600">
+          <button
+            onClick={() => setSqlOpen((o) => !o)}
+            className="w-full flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-600 hover:bg-gray-750 transition-colors"
+          >
             <span className="text-xs font-semibold text-green-400 uppercase tracking-wide">SQL Query</span>
-          </div>
-          <pre className="px-4 py-3 text-sm text-green-300 font-mono overflow-x-auto whitespace-pre-wrap break-all">
-            {content.sqlText}
-          </pre>
+            <span className="text-gray-400 text-xs">{sqlOpen ? '▲ collapse' : '▼ expand'}</span>
+          </button>
+          {(sqlOpen || isStreaming) && (
+            <pre className="px-4 py-3 text-sm text-green-300 font-mono overflow-x-auto whitespace-pre-wrap break-all">
+              {content.sqlText}
+            </pre>
+          )}
         </div>
       )}
       {content.queryError && (
