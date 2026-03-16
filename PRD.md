@@ -122,3 +122,4 @@ A task is ONLY complete when:
 - [x] **Task 27:** Can you introduce the option for the table to be interpretted in natural language.
 - [x] **Task 28:** Can you allow the user to request a tts generation of the natural language interpretation, involving a call to the deepinfra kokoro82m tts model.
 - [x] **Task 29:** Can you make the size of the vegalite chart more dynamic so that it fits the width and height of the box in which it is placed? 
+- [x] **Task 30:** Can you either make the vertical size of the chart container fit the chart (preferred) or make it resizable? The current graph is squished

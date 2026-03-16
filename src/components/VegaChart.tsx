@@ -9,11 +9,16 @@ export default function VegaChart({ spec }: { spec: object }) {
     if (!containerRef.current) return;
     let cancelled = false;
 
-    // Override spec dimensions so the chart fills its container
-    const responsiveSpec = {
-      ...(spec as Record<string, unknown>),
+    const specRecord = spec as Record<string, unknown>;
+
+    // Make width responsive; preserve spec height if provided, otherwise use a sensible default
+    const hasExplicitHeight =
+      specRecord.height !== undefined && specRecord.height !== 'container';
+
+    const responsiveSpec: Record<string, unknown> = {
+      ...specRecord,
       width: 'container' as const,
-      height: 300,
+      height: hasExplicitHeight ? specRecord.height : 350,
       autosize: { type: 'fit', contains: 'padding' },
     };
 
@@ -26,6 +31,18 @@ export default function VegaChart({ spec }: { spec: object }) {
         .then((result) => {
           if (!cancelled) {
             viewRef.current = result.view;
+            // After the first render, size the container to match the SVG's actual height
+            // so that the container grows to fit rather than clipping the chart.
+            requestAnimationFrame(() => {
+              if (cancelled || !containerRef.current) return;
+              const svg = containerRef.current.querySelector('svg');
+              if (svg) {
+                const svgH = parseFloat(svg.getAttribute('height') ?? '0');
+                if (svgH > 0) {
+                  containerRef.current.style.height = `${svgH}px`;
+                }
+              }
+            });
           } else {
             result.finalize();
           }
@@ -42,7 +59,7 @@ export default function VegaChart({ spec }: { spec: object }) {
     };
   }, [spec]);
 
-  // Resize chart when container width changes
+  // Resize chart when container width changes; also re-sync height
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -50,6 +67,14 @@ export default function VegaChart({ spec }: { spec: object }) {
     const observer = new ResizeObserver(() => {
       if (viewRef.current) {
         try { viewRef.current.resize(); viewRef.current.run(); } catch { /* ignore */ }
+        // Re-sync container height after a resize redraw
+        requestAnimationFrame(() => {
+          const svg = el.querySelector('svg');
+          if (svg) {
+            const svgH = parseFloat(svg.getAttribute('height') ?? '0');
+            if (svgH > 0) el.style.height = `${svgH}px`;
+          }
+        });
       }
     });
     observer.observe(el);
