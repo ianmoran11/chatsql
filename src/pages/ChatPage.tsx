@@ -7,6 +7,7 @@ import VegaChart from '../components/VegaChart';
 import { useDatabase } from '../contexts/DatabaseContext';
 import { streamLLMResponse, type ConversationMessage } from '../lib/llmService';
 import { generateChartSpec } from '../lib/chartService';
+import { interpretResults } from '../lib/interpretationService';
 
 interface AuditEntry {
   timestamp: string;
@@ -25,6 +26,8 @@ export interface AssistantContent {
   queryError?: string | null;
   chartSpec?: object | null;
   chartError?: string | null;
+  interpretation?: string | null;
+  interpretationError?: string | null;
 }
 
 export interface ChatMessage {
@@ -115,10 +118,14 @@ function AssistantMessage({
   msg,
   onGenerateChart,
   isGeneratingChart,
+  onInterpret,
+  isInterpreting,
 }: {
   msg: ChatMessage;
   onGenerateChart?: (msgId: string) => void;
   isGeneratingChart?: boolean;
+  onInterpret?: (msgId: string) => void;
+  isInterpreting?: boolean;
 }) {
   const content = msg.structured ?? parseStreamedContent(msg.content);
   const hasStructure = content.planText || content.sqlText;
@@ -167,7 +174,7 @@ function AssistantMessage({
       )}
       {hasChartableData && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => onGenerateChart?.(msg.id)}
               disabled={isGeneratingChart}
@@ -184,6 +191,22 @@ function AssistantMessage({
                 '📊 Generate Chart'
               )}
             </button>
+            <button
+              onClick={() => onInterpret?.(msg.id)}
+              disabled={isInterpreting}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors flex items-center gap-1.5"
+            >
+              {isInterpreting ? (
+                <>
+                  <span className="animate-spin inline-block w-3 h-3 border border-white border-t-transparent rounded-full" />
+                  Interpreting…
+                </>
+              ) : content.interpretation ? (
+                '↺ Re-interpret Results'
+              ) : (
+                '💬 Interpret Results'
+              )}
+            </button>
           </div>
           {content.chartError && (
             <div className="bg-red-900/40 border border-red-700 rounded-lg px-4 py-3 text-sm">
@@ -194,6 +217,18 @@ function AssistantMessage({
           {content.chartSpec && !content.chartError && (
             <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
               <VegaChart spec={content.chartSpec} />
+            </div>
+          )}
+          {content.interpretationError && (
+            <div className="bg-red-900/40 border border-red-700 rounded-lg px-4 py-3 text-sm">
+              <p className="text-xs font-semibold text-red-400 mb-1 uppercase tracking-wide">Interpretation Error</p>
+              <p className="text-red-300 font-mono text-xs">{content.interpretationError}</p>
+            </div>
+          )}
+          {content.interpretation && !content.interpretationError && (
+            <div className="bg-teal-900/30 border border-teal-700 rounded-lg px-4 py-3 text-sm">
+              <p className="text-xs font-semibold text-teal-400 mb-2 uppercase tracking-wide">Natural Language Interpretation</p>
+              <p className="text-gray-100 whitespace-pre-wrap leading-relaxed">{content.interpretation}</p>
             </div>
           )}
         </div>
@@ -262,6 +297,7 @@ export default function ChatPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [generatingChartFor, setGeneratingChartFor] = useState<Set<string>>(new Set());
+  const [interpretingFor, setInterpretingFor] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -394,6 +430,48 @@ export default function ChatPage() {
     }
   };
 
+  const handleInterpret = async (msgId: string) => {
+    const msg = messages.find((m) => m.id === msgId);
+    if (!msg?.structured?.queryResult?.length) return;
+
+    const result = msg.structured.queryResult[0];
+    const question = (() => {
+      const idx = messages.findIndex((m) => m.id === msgId);
+      for (let i = idx - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') return messages[i].content;
+      }
+      return '';
+    })();
+
+    setInterpretingFor((prev) => new Set(prev).add(msgId));
+
+    try {
+      const interpretation = await interpretResults(question, result);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? { ...m, structured: { ...m.structured!, interpretation, interpretationError: null } }
+            : m
+        )
+      );
+    } catch (err) {
+      const interpretationError = err instanceof Error ? err.message : String(err);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? { ...m, structured: { ...m.structured!, interpretation: null, interpretationError } }
+            : m
+        )
+      );
+    } finally {
+      setInterpretingFor((prev) => {
+        const next = new Set(prev);
+        next.delete(msgId);
+        return next;
+      });
+    }
+  };
+
   return (
     <div className="h-screen bg-gray-900 text-white flex overflow-hidden">
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
@@ -480,6 +558,8 @@ export default function ChatPage() {
                     msg={msg}
                     onGenerateChart={handleGenerateChart}
                     isGeneratingChart={generatingChartFor.has(msg.id)}
+                    onInterpret={handleInterpret}
+                    isInterpreting={interpretingFor.has(msg.id)}
                   />
                 )}
               </div>
