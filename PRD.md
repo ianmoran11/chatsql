@@ -124,3 +124,4 @@ A task is ONLY complete when:
 - [x] **Task 29:** Can you make the size of the vegalite chart more dynamic so that it fits the width and height of the box in which it is placed? 
 - [x] **Task 30:** Can you either make the vertical size of the chart container fit the chart (preferred) or make it resizable? The current graph is squished
 - [x] **Task 31:** Can you ensure that the colour theme of the chart matches the currently active colour scheme of the app?
+- [x] **Task 32:** I've spotted some inaccuracies in the charts. Can you ensure that values are enterred programmatically, rather than by llm text generation. Is there some way to use sqlite or something like that to fill the values in vegalite?

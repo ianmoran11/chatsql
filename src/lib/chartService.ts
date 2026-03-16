@@ -14,33 +14,36 @@ export async function generateChartSpec(
 
   const { columns, values } = result;
 
-  // Cap at 200 rows for the LLM to stay within token limits
-  const dataRows = values.slice(0, 200).map((row) => {
+  // Build the actual data rows from the real SQL result (all rows, not capped)
+  const dataRows = values.map((row) => {
     const obj: Record<string, unknown> = {};
     columns.forEach((col, i) => { obj[col] = row[i]; });
     return obj;
   });
 
-  const systemPrompt = `You are a data visualization expert. Generate the most appropriate Vega-Lite v5 specification to visualize the provided query results.
+  // Provide a small sample so the LLM understands data types/shape, without sending all rows
+  const sampleRows = dataRows.slice(0, 5);
 
-Rules:
+  const systemPrompt = `You are a data visualization expert. Generate a Vega-Lite v5 specification to visualize the provided query results.
+
+CRITICAL RULES:
 1. Return ONLY a valid JSON Vega-Lite v5 specification — no explanation, no markdown code fences, no extra text.
-2. Embed the data directly using "data": {"values": [...]}.
+2. Do NOT include any data values in the spec. Set "data" to exactly: {"name": "table"}
+   The actual data will be injected programmatically after you return the spec.
 3. Choose the best mark type (bar, line, point, arc, etc.) based on the data shape and question.
 4. Include a descriptive title.
-5. Use axis labels that match the column names.
-6. Use a color scheme suitable for a dark UI background.
-7. The spec must be self-contained and renderable by vega-embed.`;
+5. Use axis labels that match the column names exactly as provided.
+6. The encoding fields must reference the exact column names provided.
+7. The spec must be valid Vega-Lite v5 renderable by vega-embed.`;
 
   const userPrompt = `Question: "${question}"
 
-Columns: ${columns.join(', ')}
-Total rows: ${values.length}${values.length > 200 ? ' (first 200 included)' : ''}
+Column names (use these exactly in your encoding): ${columns.join(', ')}
+Total rows: ${values.length}
+Sample rows (for type inference only — do NOT include data in the spec):
+${JSON.stringify(sampleRows, null, 2)}
 
-Data:
-${JSON.stringify(dataRows)}
-
-Return the Vega-Lite spec now.`;
+Return the Vega-Lite spec now. Remember: set "data": {"name": "table"} and do not embed any data values.`;
 
   const response = await fetch(OPENROUTER_API_URL, {
     method: 'POST',
@@ -78,5 +81,10 @@ Return the Vega-Lite spec now.`;
     specText = fenceMatch[1].trim();
   }
 
-  return JSON.parse(specText);
+  const spec = JSON.parse(specText) as Record<string, unknown>;
+
+  // Programmatically inject the real data from the SQL result, ignoring whatever the LLM may have set
+  spec.data = { values: dataRows };
+
+  return spec;
 }
